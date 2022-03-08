@@ -1,0 +1,77 @@
+---
+title: Managing App Requests with Route Services
+owner: CF for VMs Networking
+---
+
+
+
+This topic describes how to bind a service instance to a route for the purpose of adding preprocessing to app requests.
+
+<%= vars.route_services_appsman2 %>
+
+Route services are a class of Marketplace Services that perform filtering or content transformation on app requests and responses.
+For more information about Marketplace Services, see the [Managing Services](../services/managing-services.html) and [User-provided Service Instances](./user-provided.html) topics.
+
+Route services exist to help remove the burden on developers who would otherwise have to implement these functions themselves. Popular use cases for route services include rate limiting, authorization, and caching. A route service may reject requests or, after some transformation, pass requests to apps.
+
+To use route services, developers must first create a service instance, choosing from compatible Marketplace services. Developers then bind this service instance to a route, and all requests for the route are preprocessed by the service instance. While some services may support instances being bound to both routes and apps, these operations have different effects. For app requests and responses to be routed through a route service, the service instance must be bound to the route.
+
+You can view a video demonstrating the use of a sample route service on YouTube: [https://youtu.be/VaaZJE2E4jI](https://youtu.be/VaaZJE2E4jI)
+
+## <a id='bind'></a> Bind a Route to a Service Instance ##
+
+You must install the Cloud Foundry Command Line Interface (cf CLI) to bind a route to a service instance. For more information, see the [Installing the cf CLI](../../cf-cli/install-go-cli.html) topic.
+
+<p class="note"><strong>Note</strong>: Gorouter rejects WebSockets requests for routes that are bound to route services. These requests return a 503 error and a <code>X-Cf-Routererror route_service_unsupported header</code>.</p>
+
+Run the [cf bind-route-service](http://cli.cloudfoundry.org/en-US/cf/bind-route-service.html) command to bind a route from an app to a service instance.
+
+The following example binds the route from `my-app.<%=vars.app_domain%>` to the service instance `my-route-service`.
+
+<pre class="terminal">
+$ cf bind-route-service <%=vars.app_domain%> my-route-service --hostname my-app
+
+Binding route my-app.<%=vars.app_domain%> to service instance my-route-service in org my-org / space my-space as developer...
+OK
+</pre>
+
+<p class="note"><strong>Note</strong>: When binding a service instance to a route, Cloud Foundry may proxy requests for the route to the service instance, or configure a network component already in the request path.</p>
+
+### <a id='bind-arbitrary-parameters'></a> Bind with Parameters ###
+
+Some services support additional configuration parameters supplied with the bind request. You can pass service-specific configuration parameters in a valid JSON object, provided either in-line or in a file. For a list of supported configuration parameters, see the documentation for the particular service offering you bind to.
+
+The following example binds the route from `my-app.<%=vars.app_domain%>` to the service instance `my-route-service`, and passes configuration parameters in-line.
+
+<pre class="terminal">
+$ cf bind-route-service <%=vars.app_domain%> my-route-service --hostname my-app -c '{"rate_limit_threshold_rps":10000}'
+
+Binding service my-db to app rails-sample in org console / space development as user@example.com...
+OK
+</pre>
+
+The following example binds the route from `my-app.<%=vars.app_domain%>` to the service instance `my-route-service`, and passes configuration parameters in a file, `/tmp/config.json`.
+
+<pre class="terminal">
+$ cf bind-route-service <%=vars.app_domain%> my-route-service --hostname my-app -c /tmp/config.json
+
+Binding route my-app.<%=vars.app_domain%> to service instance my-route-service in org my-org / space my-space as developer...
+OK
+</pre>
+
+## <a id='unbind'></a> Unbind a Route from a Service Instance ##
+
+You must install the Cloud Foundry Command Line Interface (cf CLI) to bind a route to a service instance. For more information, see the [Installing the cf CLI](../../cf-cli/install-go-cli.html) topic.
+
+Run the [cf unbind-route-service](http://cli.cloudfoundry.org/en-US/cf/unbind-route-service.html) command to unbind a route from an app to a service instance.
+
+The following example removes the route from `my-app.<%=vars.app_domain%>` to the service instance `my-route-service`.
+
+<pre class="terminal">
+$ cf unbind-route-service <%=vars.app_domain%> my-route-service --hostname my-app
+
+Unbinding may leave apps mapped to route my-app.<%=vars.app_domain%> vulnerable e.g. if service instance my-route-service provides authentication. Do you want to proceed?> y
+
+Unbinding route my-app.<%=vars.app_domain%> from service instance my-route-service in org my-org / space my-space as developer...
+OK
+</pre>

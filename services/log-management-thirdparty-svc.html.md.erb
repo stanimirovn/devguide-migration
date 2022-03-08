@@ -1,0 +1,249 @@
+---
+title: Service-Specific Instructions for Streaming App Logs
+owner: PCF Metrics
+---
+
+
+
+This topic provides instructions for configuring some third-party log management
+services.
+
+Once you have configured a service, refer to the [Third-Party Log Management Services](./log-management.html) topic for instructions on binding your app to the service.
+
+## <a id='logit'></a>Logit.io ##
+
+From your Logit.io dashboard:
+
+1. Identify the Logit ELK stack you want to use.
+
+1. Click Logstash **Configuration**.
+
+1. Note your Logstash **Endpoint**.
+
+1. Note your TCP-SSL, TCP, or UDP **Port** (not the syslog port).
+
+1. Create the log drain service in Cloud Foundry.
+
+    <pre class='terminal'>
+    $ cf cups logit-ssl-drain -l syslog-tls://ENDPOINT:PORT
+    </pre>
+    or
+    <pre class='terminal'>
+    $ cf cups logit-drain -l syslog://ENDPOINT:PORT
+    </pre>
+
+1. Bind the service to an app.
+
+    <pre class='terminal'>
+    $ cf bind-service YOUR-CF-APP-NAME logit-ssl-drain
+    </pre>
+    or
+    <pre class='terminal'>
+    $ cf bind-service YOUR-CF-APP-NAME logit-drain
+    </pre>
+
+1. Restage or push the app using one of the following commands:
+
+    <pre class='terminal'>$ cf restage YOUR-CF-APP-NAME</pre>
+
+    <pre class='terminal'>$ cf push YOUR-CF-APP-NAME</pre>
+
+    After a short delay, logs begin to appear in Kibana.
+
+## <a id='papertrail'></a>Papertrail ##
+
+From your Papertrail account:
+
+1. Click **Add System**.
+
+    <%= image_tag("../images/third-party-logs/papertrail-02.png") %>
+
+1. Click the **Other** link.
+
+    <%= image_tag("../images/third-party-logs/papertrail-03.png") %>
+
+1. Select **I use Cloud Foundry**, enter a name, and click **Save**.
+
+    <%= image_tag("../images/third-party-logs/papertrail-04.png") %>
+
+1. Record the URL with port that is displayed after creating the system.
+
+    <%= image_tag("../images/third-party-logs/papertrail-05.png") %>
+
+1. Create the log drain service in Cloud Foundry.
+
+    <pre class='terminal'>
+    $ cf cups my-logs -l syslog-tls://logs.papertrailapp.com:PORT
+    </pre>
+
+1. Bind the service to an app.
+
+    <pre class='terminal'>
+    $ cf bind-service APPLICATION-NAME my-logs
+    </pre>
+
+1. Restage the app.
+
+    <pre class='terminal'>
+    $ cf restage APPLICATION-NAME
+    </pre>
+
+    After a short delay, logs begin to flow automatically.
+
+1. Once Papertrail starts receiving log entries, the view automatically updates
+to the logs viewing page.
+
+    <%= image_tag("../images/third-party-logs/papertrail-11.png") %>
+
+## <a id='splunk'></a>Splunk ##
+
+See [Streaming App Logs to Splunk](integrate-splunk.html) for details.
+
+## <a id='splunkstorm'></a>Splunk Storm ##
+
+From your Splunk Storm account:
+
+1. Click **Add project**.
+
+    <%= image_tag("../images/third-party-logs/splunkstorm-02.png") %>
+
+1. Enter the project details.
+
+    <%= image_tag("../images/third-party-logs/splunkstorm-03.png") %>
+
+1. Create a new **input** for **Network data**.
+
+    <%= image_tag("../images/third-party-logs/splunkstorm-04.png") %>
+
+1. Manually enter the external IP addresses your Cloud Foundry administrator
+assigns to outbound traffic. <%= vars.log_management %>
+
+    <%= image_tag("../images/third-party-logs/splunkstorm-05.png") %>
+
+1. Note the host and port provided for TCP input.
+
+    <%= image_tag("../images/third-party-logs/splunkstorm-06.png") %>
+
+1. Create the log drain service in Cloud Foundry using the displayed TCP host and port.
+
+    <pre class='terminal'>
+    $ cf cups my-logs -l syslog://HOST:PORT
+    </pre>
+
+1. Bind the service to an app
+
+    <pre class='terminal'>
+    $ cf bind-service APPLICATION-NAME my-logs
+    </pre>
+
+1. Restage the app
+
+    <pre class='terminal'>
+    $ cf restage APPLICATION-NAME
+    </pre>
+
+    After a short delay, logs begin to flow automatically.
+
+1. Wait for some events to appear, then click **Data Summary**.
+
+    <%= image_tag("../images/third-party-logs/splunkstorm-09.png") %>
+
+1. Click the **loggregator** link to view all incoming log entries from Cloud Foundry.
+
+    <%= image_tag("../images/third-party-logs/splunkstorm-10.png") %>
+
+## <a id='sumologic'></a>SumoLogic ##
+
+<p class="note"><strong>Note</strong>: SumoLogic uses HTTPS for communication.  HTTPS is supported in Cloud Foundry v158 and later.</p>
+
+From your SumoLogic account:
+
+1. Click the **Add Collector** link.
+
+    <%= image_tag("../images/third-party-logs/sumologic-02.png") %>
+
+1. Choose **Hosted Collector** and fill in the details.
+
+    <%= image_tag("../images/third-party-logs/sumologic-03a.png") %>
+
+    <%= image_tag("../images/third-party-logs/sumologic-03b.png") %>
+
+1. In the new collector's row of the collectors view, click the **Add Source**
+link.
+
+    <%= image_tag("../images/third-party-logs/sumologic-04.png") %>
+
+1. Select **HTTP** source and fill in the details. Note that you'll be provided an HTTPS url
+
+    <%= image_tag("../images/third-party-logs/sumologic-05.png") %>
+
+1. Once the source is created, a URL should be displayed.
+You can also view the URL by clicking the **Show URL** link beside the created
+source.
+
+    <%= image_tag("../images/third-party-logs/sumologic-06a.png") %>
+
+1. Create the log drain service in Cloud Foundry using the displayed URL.
+
+    <pre class='terminal'>
+    $ cf cups my-logs -l HTTPS-SOURCE-URL
+    </pre>
+
+
+1. Bind the service to an app.
+
+    <pre class='terminal'>
+    $ cf bind-service APPLICATION-NAME my-logs
+    </pre>
+
+1. Restage the app.
+
+    <pre class='terminal'>
+    $ cf restage APPLICATION-NAME
+    </pre>
+
+    After a short delay, logs begin to flow automatically.
+
+1. In the SumoLogic dashboard, click **Manage**, then click **Status** to see a
+view of log messages received over time.
+
+    <%= image_tag("../images/third-party-logs/sumologic-09.png") %>
+
+1. In the SumoLogic dashboard, click **Search**.
+Place the cursor in the search box, then press **Enter** to submit an empty
+search query.
+
+    <%= image_tag("../images/third-party-logs/sumologic-10.png") %>
+
+## <a id='logsene'></a>Logsene ##
+
+<p class="note"><strong>Note</strong>: Logsene uses HTTPS for communication. HTTPS is supported in Cloud Foundry v158 and later.</p>
+
+From your Sematext account:
+
+1. Click the [Create App / Logsene App](https://apps.sematext.com/logsene-reports/registerApplication.do) menu item. Enter a name and click **Add Application** to create the Logsene App.
+
+1. Create the log drain service in Cloud Foundry using the displayed URL.
+
+    <pre class='terminal'>
+    $ cf cups logsene-log-drain -l https://logsene-cf-receiver.sematext.com/YOUR_LOGSENE_TOKEN
+    </pre>
+
+1. Bind the log drain to an app. You could optionally bind multiple apps to one log drain.
+
+    <pre class='terminal'>
+    $ cf bind-service YOUR-CF-APP-NAME logsene-log-drain
+    </pre>
+
+1. Restage the app.
+
+    <pre class='terminal'>
+    $ cf restage APPLICATION-NAME
+    </pre>
+
+    After a short delay, logs begin to flow automatically and appear in the [Logsene UI](https://apps.sematext.com/users-web/services.do#logsene).
+
+## <a id='logentries'></a>Logentries is Not Supported ##
+
+Cloud Foundry distributes log messages over multiple servers to handle
+load. Currently, we do not recommend using Logentries as it does not support multiple syslog sources.
